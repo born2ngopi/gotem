@@ -81,14 +81,21 @@ func (t *terminal) Request(host, command string) ([]string, error) {
 		return nil, errors.New("host not found")
 	}
 
-	var b bytes.Buffer
-	t.sessions[host].Stdout = &b
-	t.sessions[host].Stderr = &b
+	var (
+		b    bytes.Buffer
+		sess = t.sessions[host]
+	)
+	sess.Stdout = &b
+	sess.Stderr = &b
 
-	stdIn, _ := t.sessions[host].StdinPipe()
+	stdIn, _ := sess.StdinPipe()
 
 	_, err := fmt.Fprintf(stdIn, "%s\n", command)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := sess.Wait(); err != nil {
 		return nil, err
 	}
 
